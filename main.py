@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 import config
 import requests
 from models import *
+import os
 
 app = FastAPI()
 
@@ -12,6 +13,10 @@ app = FastAPI()
 @lru_cache()
 def get_settings():
     return config.Settings()
+
+
+# Define a boolean variable to indicate the success of the OAuth connection
+oauth_connection_successful = False
 
 
 # Build the OAuth 2.0 redirect URL with required parameters (client_id, scope, redirect_uri, etc.)
@@ -37,6 +42,8 @@ def slack_oauth_redirect(settings: Annotated[config.Settings, Depends(get_settin
 @app.get("/post_authorize", response_model=CallPostAuthorizeRes)
 def slack_oauth_callback(code: str, settings: Annotated[config.Settings, Depends(get_settings)]):
     try:
+        # call the global connection variable
+        global oauth_connection_successful
         # Parameters for making the POST request to exchange the code for an access token
         token_request_data = {
             "client_id": settings.CLIENT_ID,
@@ -67,6 +74,8 @@ def slack_oauth_callback(code: str, settings: Annotated[config.Settings, Depends
                         "app_id" : response_json["app_id"]
                     }
                 )
+                # Set oauth_connection_successful to True if successful
+                oauth_connection_successful = True
                 return result
             else:
                 error = response_json["error"] if "error" in response_json else ""
@@ -140,6 +149,71 @@ def get_apps_per_user(request: GetAppsReq, settings: Annotated[config.Settings, 
         else:
             return JSONResponse(content={"status" : False, "details" : "Get list of apps failed. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except requests.exceptions.RequestException as e:
-        return JSONResponse(content={"status" : False, "details" : "OAuth request failed. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return JSONResponse(content={"status" : False, "details" : "Get list of apps failed. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return JSONResponse(content={"status" : False, "detail" : "Internal Server Error. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+
+#list all apps connected to A user..
+@app.post("/run", response_model=GetRunRes)
+def get_apps_per_user(request: GetRunReq, settings: Annotated[config.Settings, Depends(get_settings)]):
+    try:
+        final_output = {}
+        # Construct the Header
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {}".format(request.page_token)
+        }
+        # Construct the URL for list of users
+        url = settings.SLACK_API_BASE_URL + "/users.list"
+        # Make the POST request to slack api to get list of users
+        response = requests.post(url, headers=headers)
+        print(response.text)
+        if response.status_code == 200:
+            response_json = response.json()
+            # Check if slack response was successful
+            if "ok" in response_json and response_json["ok"] == True:
+                users=response_json["members"]
+                apps = []
+                # Construct the URL for list of apps to a specific user
+                url = settings.SLACK_API_BASE_URL + "/admin.apps.requests.list"
+                # Make the POST request to slack api to get list of apps
+                response = requests.post(url, headers=headers)
+                print(response.text)
+                if response.status_code == 200:
+                    response_json = response.json()
+                    if "ok" in response_json and response_json["ok"] == True:
+                        apps=response_json["app_requests"]
+                final_output = {
+                    "users" : users,
+                    "apps" : apps
+                }
+                result = GetRunRes(page_token=request.page_token, data=final_output)
+                return result
+            else:
+                error = response_json["error"] if "error" in response_json else ""
+                return JSONResponse(content={"status" : False, "detail" : "Get list of comprehensive data failed. Reason: {}".format(error)}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return JSONResponse(content={"status" : False, "details" : "Get list of comprehensive data failed. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except requests.exceptions.RequestException as e:
+        return JSONResponse(content={"status" : False, "details" : "Get list of comprehensive data failed. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return JSONResponse(content={"status" : False, "detail" : "Internal Server Error. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+
+
+#Verify if there is a valid token..
+@app.get("/verify", response_model=GetVerificationRes)
+def get_apps_per_user():
+    try:
+        global oauth_connection_successful
+        result = GetVerificationRes(connection_status=oauth_connection_successful)
+        return result
+    except requests.exceptions.RequestException as e:
+        return JSONResponse(content={"status" : False, "details" : "Get verification status failed. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         return JSONResponse(content={"status" : False, "detail" : "Internal Server Error. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

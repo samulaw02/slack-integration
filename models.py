@@ -101,7 +101,7 @@ class GetUsersPageRes:
 @dataclass
 class GetAppsReq:
     org_id: str
-    user: UserRecord
+    user: typing.Optional[UserRecord] = None
     # this was added in order to make it possible to call slack api
     page_token: typing.Optional[str] = None
 
@@ -129,6 +129,28 @@ class AppRecord:
 class GetAppsRes:
     apps: typing.List[AppRecord]
     page_token: typing.Optional[str] = None
+
+
+@dataclass
+class GetRunReq:
+    page_token: typing.Optional[str] = None
+
+
+@dataclass
+class GetRunRes:
+    data: typing.Optional[dict]
+    page_token: typing.Optional[str] = None
+
+
+
+@dataclass
+class GetVerificationReq:
+    access_token: typing.Optional[str] = None
+
+
+@dataclass
+class GetVerificationRes:
+    connection_status: bool
 
 
 
