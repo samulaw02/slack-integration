@@ -1,11 +1,14 @@
 from functools import lru_cache
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Request
 from typing_extensions import Annotated
 from fastapi.responses import JSONResponse
 import config
 import requests
 from models import *
 import os
+import hashlib
+import hmac
+import json
 
 app = FastAPI()
 
@@ -217,3 +220,80 @@ def get_apps_per_user():
         return JSONResponse(content={"status" : False, "details" : "Get verification status failed. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         return JSONResponse(content={"status" : False, "detail" : "Internal Server Error. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+#Slack Event wehook
+@app.post("/events")
+async def slack_event(request: Request, settings: Annotated[config.Settings, Depends(get_settings)]):
+    try:
+        # Verify the request came from Slack
+        signature = request.headers.get("X-Slack-Signature")
+        timestamp = request.headers.get("X-Slack-Request-Timestamp")
+        request_body = await request.body()
+        slack_signing_secret = settings.SIGNING_SECRET
+        is_valid_request = verify_request(request_body, signature, timestamp, slack_signing_secret)
+        if not is_valid_request:
+            raise HTTPException(status_code=401, detail="Invalid request")
+        event_data = json.loads(request_body.decode("utf-8"))
+        event_type = event_data.get("type")
+        if event_type == "event_callback":
+            event = event_data.get("event")
+            if event.get("type") == "file_shared":
+                # Extract file information
+                user = event.get("user")
+                file_info = event.get("file")
+                file_size = file_info.get("size")
+                file_type = file_info.get("filetype")
+                timestamp = event.get("event_ts")
+                
+                # Download and save the file
+                file_url = file_info.get("url_private")
+                print(event)
+                file_path = download_and_save_file(file_url)
+                # Print file information
+                print(f"User: {user}")
+                print(f"File Size: {file_size} bytes")
+                print(f"File Type: {file_type}")
+                print(f"Timestamp: {timestamp}")
+                print(f"File Path: {file_path}")
+        if event_type == "url_verification":
+            return event_data.get("challenge")
+        return {"status": "ok"}
+    except Exception as e:
+        return JSONResponse(content={"status": False, "detail" : "Internal Server Error. Reason: {}".format(str(e))}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+def verify_request(request_body, signature, timestamp, slack_signing_secret):
+    print("body{}-signature{}-timestamp{}-slack_signing_secret{}".format(request_body,signature,timestamp,slack_signing_secret))
+    # Verify that the request came from Slack
+    request_signature = "v0=" + hmac.new(
+        bytes(slack_signing_secret, "utf-8"),
+        msg=bytes(f"v0:{timestamp}:{request_body.decode('utf-8')}", "utf-8"),
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    
+    return hmac.compare_digest(request_signature, signature)
+
+
+def download_and_save_file(file_url):
+    # Download the file
+    response = requests.get(file_url)
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to download file")
+
+    # Define the root directory of your project
+    project_root = os.path.dirname(os.path.abspath(__file__))
+
+    # Define the path to the media folder (crea te it if it doesn't exist)
+    media_folder = os.path.join(project_root, "media")
+    os.makedirs(media_folder, exist_ok=True)
+
+    # Define the file path within the media folder
+    file_path = os.path.join(media_folder, os.path.basename(file_url))
+    
+    # Save the file to the specified path
+    with open(file_path, "wb") as f:
+        f.write(response.content)
+
+    return file_path

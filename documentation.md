@@ -96,6 +96,8 @@ Before setting up the project, ensure you have the following prerequisites insta
 
 -   /post_authorize
     -   [Description]: Exchanges an authorization code for an access token.
+    -   [HTTP]: Exchanges
+    -   [Description]:
     -   [HTTP Method]: GET
     -   [Parameters]: code (authorization code)
     -   [Response]: JSON with the access token and user information.
