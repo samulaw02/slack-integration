@@ -238,24 +238,30 @@ async def slack_event(request: Request, settings: Annotated[config.Settings, Dep
         event_type = event_data.get("type")
         if event_type == "event_callback":
             event = event_data.get("event")
-            if event.get("type") == "file_shared":
+            '''A file_share message is sent when a file is shared into a channel, group or direct message.
+            Check if the event type is a message and file is involve '''
+            if event.get("type") == "message" and "files" in event:
                 # Extract file information
-                user = event.get("user")
-                file_info = event.get("file")
-                file_size = file_info.get("size")
-                file_type = file_info.get("filetype")
-                timestamp = event.get("event_ts")
-                
-                # Download and save the file
-                file_url = file_info.get("url_private")
-                print(event)
-                file_path = download_and_save_file(file_url)
-                # Print file information
-                print(f"User: {user}")
-                print(f"File Size: {file_size} bytes")
-                print(f"File Type: {file_type}")
-                print(f"Timestamp: {timestamp}")
-                print(f"File Path: {file_path}")
+                files = event.get("files")
+                for file in files:
+                    user = event.get("user")
+                    file_size = file.get("size")
+                    file_type = file.get("filetype")
+                    timestamp = file.get("timestamp")
+                    
+                    # Download and save the file
+                    file_url = file.get("url_private")
+                    print(event)
+                    try:
+                        file_path = download_and_save_file(file_url)
+                    except Exception as e:
+                        print(str(e))
+                    # Print file information
+                    print(f"User: {user}")
+                    print(f"File Size: {file_size} bytes")
+                    print(f"File Type: {file_type}")
+                    print(f"Timestamp: {timestamp}")
+                    print(f"File Path: {file_path}")
         if event_type == "url_verification":
             return event_data.get("challenge")
         return {"status": "ok"}
@@ -276,24 +282,33 @@ def verify_request(request_body, signature, timestamp, slack_signing_secret):
     return hmac.compare_digest(request_signature, signature)
 
 
+
 def download_and_save_file(file_url):
-    # Download the file
-    response = requests.get(file_url)
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail="Failed to download file")
+    try:
+        # Download the file
+        response = requests.get(file_url)
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to download file")
 
-    # Define the root directory of your project
-    project_root = os.path.dirname(os.path.abspath(__file__))
+        # Define the root directory of your project
+        project_root = os.path.dirname(os.path.abspath(__file__))
 
-    # Define the path to the media folder (crea te it if it doesn't exist)
-    media_folder = os.path.join(project_root, "media")
-    os.makedirs(media_folder, exist_ok=True)
+        # Define the path to the media folder (create it if it doesn't exist)
+        media_folder = os.path.join(project_root, "media")
+        os.makedirs(media_folder, exist_ok=True)
 
-    # Define the file path within the media folder
-    file_path = os.path.join(media_folder, os.path.basename(file_url))
-    
-    # Save the file to the specified path
-    with open(file_path, "wb") as f:
-        f.write(response.content)
+        # Define the file path within the media folder
+        file_path = os.path.join(media_folder, os.path.basename(file_url))
 
-    return file_path
+        # Check if the response content type is an image
+        content_type = response.headers.get('content-type')
+        print(content_type)
+        if content_type and content_type.startswith('image'):
+            # Save the file to the specified path
+            with open(file_path, "wb") as f:
+                f.write(response.content)
+            return file_path
+        else:
+            raise HTTPException(status_code=400, detail="Not an image file")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
