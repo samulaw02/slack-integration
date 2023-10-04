@@ -34,32 +34,45 @@ Before setting up the project, ensure you have the following prerequisites insta
 ### Installation
 
 1. Clone the repository:
-
-   `git clone <repository_url>`
-   `cd <repository_directory>`
+    <pre>
+    ```
+    git clone <repository_url>
+    cd <repository_directory>
+    ```
+   </pre>
 
 
 2. Create a virtual environment (optional but recommended):
-
-   `python -m venv venv`
-   `source venv/bin/activate  # On Windows: venv\Scripts\activate`
+   <pre>
+    ```
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+    </pre>
 
 3. Install the required dependencies:
+    <pre>
+    ```
+    pip install -r requirements.txt
+    ```
+    </pre>
 
-   `pip install -r requirements.txt`
 
 4. Set Up Environment Variables:
    Create a .env file with the following content, replacing placeholders with your actual values:
-
-   `APP_ID=your_app_id`
-   `CLIENT_ID=your_client_id`
-   `CLIENT_SECRET=your_client_secret`
-   `SIGNING_SECRET=your_signing_secret`
-   `OAUTH_AUTHORIZE_URL=your_oauth_authorize_url`
-   `REDIRECT_URL=your_redirect_url`
-   `TOKEN_EXCHANGE_URL=your_token_exchange_url`
-   `SLACK_API_BASE_URL=your_slack_api_base_url`
-   `SCOPE="your_scope"`
+   <pre>
+   ```
+   APP_ID=your_app_id
+   CLIENT_ID=your_client_id
+   CLIENT_SECRET=your_client_secret
+   SIGNING_SECRET=your_signing_secret`
+   OAUTH_AUTHORIZE_URL=your_oauth_authorize_url
+   REDIRECT_URL=your_redirect_url
+   TOKEN_EXCHANGE_URL=your_token_exchange_url
+   SLACK_API_BASE_URL=your_slack_api_base_url
+   SCOPE="your_scope"
+   ```
+   </pre>
 
 
 5. Run the FastAPI Application:
@@ -82,22 +95,28 @@ Before setting up the project, ensure you have the following prerequisites insta
     `GET /authorize`
 
     Example Response:
-    ```{
+    <pre>
+    ```
+    {
     "status": true,
     "url": "https://slack.com/oauth2/authorize?client_id=your_client_id&scope=your_scope"
-    }```
+    }
+    ```
+    </pre>
 
 -   /post_authorize
-    [Description]: Exchanges an authorization code for an access token.
-    [HTTP Method]: GET
-    [Parameters]: code (authorization code)
-    [Response]: JSON with the access token and user information.
+    -   [Description]: Exchanges an authorization code for an access token.
+    -   [HTTP Method]: GET
+    -   [Parameters]: code (authorization code)
+    -   [Response]: JSON with the access token and user information.
     
     Example Request:
     `GET /post_authorize?code=your_authorization_code`
     
     Example Response:
-    ```{
+    </pre>
+    ```
+    {
     "status": true,
     "protected_data": {
         "access_token": "your_access_token",
@@ -108,7 +127,9 @@ Before setting up the project, ensure you have the following prerequisites insta
         "scope": "your_scope",
         "app_id": "your_app_id"
     }
-    }```
+    }
+    ```
+    </pre>
 
     Continue documenting the other endpoints in a similar manner.
 
