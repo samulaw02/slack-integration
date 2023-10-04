@@ -35,33 +35,26 @@ Before setting up the project, ensure you have the following prerequisites insta
 
 1. Clone the repository:
     <pre>
-    ```
     git clone <repository_url>
     cd <repository_directory>
-    ```
    </pre>
 
 
 2. Create a virtual environment (optional but recommended):
    <pre>
-    ```
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
-    ```
     </pre>
 
 3. Install the required dependencies:
     <pre>
-    ```
     pip install -r requirements.txt
-    ```
     </pre>
 
 
 4. Set Up Environment Variables:
    Create a .env file with the following content, replacing placeholders with your actual values:
    <pre>
-   ```
    APP_ID=your_app_id
    CLIENT_ID=your_client_id
    CLIENT_SECRET=your_client_secret
@@ -71,7 +64,6 @@ Before setting up the project, ensure you have the following prerequisites insta
    TOKEN_EXCHANGE_URL=your_token_exchange_url
    SLACK_API_BASE_URL=your_slack_api_base_url
    SCOPE="your_scope"
-   ```
    </pre>
 
 
@@ -96,12 +88,10 @@ Before setting up the project, ensure you have the following prerequisites insta
 
     Example Response:
     <pre>
-    ```
     {
     "status": true,
     "url": "https://slack.com/oauth2/authorize?client_id=your_client_id&scope=your_scope"
     }
-    ```
     </pre>
 
 -   /post_authorize
@@ -115,7 +105,6 @@ Before setting up the project, ensure you have the following prerequisites insta
     
     Example Response:
     </pre>
-    ```
     {
     "status": true,
     "protected_data": {
@@ -128,7 +117,6 @@ Before setting up the project, ensure you have the following prerequisites insta
         "app_id": "your_app_id"
     }
     }
-    ```
     </pre>
 
     Continue documenting the other endpoints in a similar manner.
