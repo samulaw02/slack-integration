@@ -206,7 +206,7 @@ def get_apps_per_user(request: GetRunReq, settings: Annotated[config.Settings, D
 
 
 
-#Verify if there is a valid token..
+#Verify if there is a valid token from oauth redirect..
 @app.get("/verify", response_model=GetVerificationRes)
 def get_apps_per_user():
     try:
