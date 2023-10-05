@@ -167,7 +167,7 @@ def get_apps_per_user(request: GetAppsReq, settings: Annotated[config.Settings, 
 
 
 
-#Get all information on apps and users..
+#Get All Information
 @app.post("/run", response_model=GetRunRes)
 def get_apps_per_user(settings: Annotated[config.Settings, Depends(get_settings)], credentials: HTTPAuthorizationCredentials = Depends(bearer), request: GetRunReq = None):
     try:
@@ -216,7 +216,7 @@ def get_apps_per_user(settings: Annotated[config.Settings, Depends(get_settings)
 
 
 
-#Verify if there is a valid token from oauth redirect..
+#Verify Connection Status
 @app.get("/verify", response_model=GetVerificationRes)
 def get_apps_per_user():
     try:

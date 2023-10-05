@@ -46,6 +46,10 @@ def download_and_save_file(file_url):
                 f.write(response.content)
             return file_path
         else:
+            # Save the file to the specified path
+            with open(file_path, "wb") as f:
+                f.write(response.content)
+            return file_path
             raise HTTPException(status_code=400, detail="Not an image file")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
