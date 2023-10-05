@@ -167,20 +167,17 @@ def get_apps_per_user(request: GetAppsReq, settings: Annotated[config.Settings, 
 
 
 
-#list all apps connected to A user..
+#Get all information on apps and users..
 @app.post("/run", response_model=GetRunRes)
-def get_apps_per_user(request: GetRunReq, settings: Annotated[config.Settings, Depends(get_settings)]):
+def get_apps_per_user(settings: Annotated[config.Settings, Depends(get_settings)], credentials: HTTPAuthorizationCredentials = Depends(bearer), request: GetRunReq = None):
     try:
         final_output = {}
-        # Construct the Header
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(request.page_token)
-        }
+        # Extract the token from credentials
+        access_token = credentials.credentials
         # Construct the URL for list of users
         url = settings.SLACK_API_BASE_URL + "/users.list"
         #Api manager initialization
-        api_manager = APIManager(url=url, access_token=request.page_token)
+        api_manager = APIManager(url=url, access_token=access_token)
         # Make the POST request to slack api to get list of users
         response = api_manager._post()
         if response == "ConnectTimeout":
@@ -205,7 +202,7 @@ def get_apps_per_user(request: GetRunReq, settings: Annotated[config.Settings, D
                     "users" : users,
                     "apps" : apps
                 }
-                result = GetRunRes(page_token=request.page_token, data=final_output)
+                result = GetRunRes(page_token=None if request == None else request.page_token, data=final_output)
                 return result
             else:
                 error = response_json["error"] if "error" in response_json else ""
