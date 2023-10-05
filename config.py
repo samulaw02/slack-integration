@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     REDIRECT_URL: str
     SLACK_API_BASE_URL: str
     SCOPE: str
+    USER_SCOPE: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

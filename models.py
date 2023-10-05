@@ -68,16 +68,16 @@ class UserRecord:
     user_id: str
     primary_email: str
     is_admin: bool
-    admin_extra_info: typing.Dict
     suspended: bool
-    archived: bool
-    org_unit_path: str
-    is_enrolled_in_2_sv: bool
-    is_enforced_in_2_sv: bool
     name: UserName
-    emails: typing.List[UserEmail]
-    mail_data: UserMailData
+    admin_extra_info: typing.Dict = dataclasses.field(default_factory=dict)
+    archived: bool = False
+    org_unit_path: str = None
+    is_enrolled_in_2_sv: bool = False
+    is_enforced_in_2_sv: bool = False
+    mail_data: UserMailData = None
     password_strength: typing.Optional[str] = None
+    emails: typing.List[UserEmail] = dataclasses.field(default_factory=list)
     password_length_compliance: typing.Optional[str] = None
     record_creation_time: typing.Optional[datetime.datetime] = None
     record_last_update_time: typing.Optional[datetime.datetime] = None
@@ -91,6 +91,7 @@ class UserRecord:
     extra_data: typing.Dict = dataclasses.field(default_factory=dict)
 
 
+
 @dataclass
 class GetUsersPageRes:
     users: typing.List[UserRecord]
@@ -102,8 +103,6 @@ class GetUsersPageRes:
 class GetAppsReq:
     org_id: str
     user: typing.Optional[UserRecord] = None
-    # this was added in order to make it possible to call slack api
-    page_token: typing.Optional[str] = None
 
 
 
